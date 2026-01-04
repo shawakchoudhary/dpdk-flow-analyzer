@@ -31,29 +31,29 @@ The application is **hardware-independent** and runs using **TAP PMD**, making i
 
 ## 🧠 Architecture Overview
 
-TAP PMD (vdev)
-|
-rte_eth_rx_burst()
-|
-mbuf RX
-|
-Packet Parsing
-(Ethernet → IPv6 → UDP)
-|
-Flow Key Creation (5-tuple)
-|
-rte_hash Lookup
-|
-+----------------------+----------------------+
-| Existing Flow | New Flow |
-| - Update stats | - Create entry |
-| - Refresh TSC | - Initialize stats |
-+----------------------+----------------------+
+    TAP PMD (vdev)
+      |
+    rte_eth_rx_burst()
+      |
+    mbuf RX
+      |
+    Packet Parsing
+    (Ethernet → IPv6 → UDP)
+      |
+    Flow Key Creation (5-tuple)
+      |
+    rte_hash Lookup
+      |
+    +----------------------+----------------------+
+    | Existing Flow | New Flow |
+    | - Update stats | - Create entry |
+    | - Refresh TSC | - Initialize stats |
+    +----------------------+----------------------+
 
-Periodic Aging (Slow Path)
-   - Scan flow table
-   - Compare TSC timestamps
-   - Expire inactive flows
+    Periodic Aging (Slow Path)
+      - Scan flow table
+      - Compare TSC timestamps
+      - Expire inactive flows
 
 
 ---
@@ -72,42 +72,53 @@ Periodic Aging (Slow Path)
 
 From the project root:
 
-make
+      make
+      
 This produces the executable "dpdk-flow-analyzer"
 
 
-▶️ Run Instructions
+## ▶️ Run Instructions
    Example command using TAP PMD:
-
-   sudo ./dpdk-flow-analyzer \
-   -l 0-1 \
-   -n 2 \
-   --huge-dir=/mnt/huge \
-   --vdev=net_tap0
+      
+       sudo ./dpdk-flow-analyzer \
+        -l 0-1 \
+        -n 2 \
+        --huge-dir=/mnt/huge \
+        --vdev=net_tap0
 
 Ensure:
    - Hugepages are allocated
    - TAP interface exists and is up
+     
+---
 
-📊 Sample Output
+## 📊 Sample Output
+
      Received 1 packets (total=25)
      ETH SRC 06:0F:C4:FD:AE:5E -> DST 33:33:00:00:00:FB
      IPv6 SRC fe80::40f:c4ff:fefd:ae5e -> DST ff02::fb
      FLOW proto=17 sport=5353 dport=5353
      NEW FLOW added (idx=3 proto=17)
      FLOW AGED OUT (idx=3 proto=17 packets=13 idle=15s)
+     
+---
 
-⏱️ Flow Aging Design
-     Each flow stores a last_seen_tsc
-     CPU Time Stamp Counter (TSC) is used for precise time measurement
-     Aging runs periodically in the slow path
-     A flow expires when: now - last_seen_tsc > FLOW_TIMEOUT
-     Using TSC avoids system calls and keeps the RX fast path highly efficient.
+##  ⏱️ Flow Aging Design:
 
-📁 Project Structure
+  - Each flow stores a last_seen_tsc
+  - CPU Time Stamp Counter (TSC) is used for precise time measurement
+  - Aging runs periodically in the slow path
+  - A flow expires when: now - last_seen_tsc > FLOW_TIMEOUT
+  - Using TSC avoids system calls and keeps the RX fast path highly efficient.
+
+---
+
+## 📁 Project Structure
+     
      dpdk-flow-analyzer/
      ├── src/
      │   └── main.c
      ├── Makefile
      ├── README.md
      └── .gitignore
+
